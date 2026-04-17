@@ -1,0 +1,17 @@
+# Build output
+obj/
+hollow_knight
+*.o
+*.d
+
+# Editor / IDE
+*.swp
+*~
+.vscode/
+.idea/
+*.DS_Store
+
+# Debug / profiling
+core
+*.dSYM/
+perf.data*

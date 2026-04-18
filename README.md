@@ -40,19 +40,45 @@ Standard PC-gamer hand layout (left hand on WASD, right hand on mouse):
 | Dash          | `Right Mouse`      |
 | Quit          | `Esc` or `Q`       |
 
-## Build
+## Build & Run
 
-Dependencies (Ubuntu / Debian):
+### Linux / Ubuntu
+
+One-shot build + launch (checks dependencies, installs if missing, builds, runs):
+
+```
+./run.sh
+```
+
+Or manual:
 
 ```
 sudo apt-get install nasm gcc make libx11-dev
-```
-
-Then:
-
-```
 make
 ./hollow_knight
+```
+
+### Windows
+
+The game targets Linux/X11, so on Windows it runs through **WSL** (Windows
+Subsystem for Linux). WSL 2 with Ubuntu provides a built-in GUI via WSLg on
+Windows 10 22H2 and Windows 11 — the game window appears as a normal Windows
+window.
+
+1. Install WSL (one-time, needs admin PowerShell): `wsl --install`
+2. Reboot, launch Ubuntu once to finish first-time setup
+3. Double-click `run.bat` (or run it from `cmd` / PowerShell)
+
+`run.bat` forwards to `run.sh` inside WSL, which installs dependencies, builds,
+and launches the game. The window appears on your Windows desktop via WSLg.
+
+### Headless / CI testing
+
+If there is no display available, run under Xvfb:
+
+```
+Xvfb :99 -screen 0 640x480x24 &
+DISPLAY=:99 ./run.sh
 ```
 
 ## Project Structure
@@ -115,13 +141,3 @@ All X11 calls are made from assembly using the System V AMD64 ABI. Uses:
 - **Control flow**: state machines via `cmp`/`je` jump tables
 - **Manual data structures**: enemy structs with explicit offset constants
 
-## Testing Notes
-
-The game can be tested in a virtual framebuffer if no display is available:
-
-```
-Xvfb :99 -screen 0 640x480x24 &
-DISPLAY=:99 ./hollow_knight
-```
-
-Screenshots can be captured with `DISPLAY=:99 import -window root out.png`.

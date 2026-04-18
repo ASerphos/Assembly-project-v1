@@ -42,7 +42,7 @@ REM then invoke run.sh inside WSL.
 echo Launching in WSL...
 echo.
 
-wsl bash -lc "cd \"$(wslpath -a '%CD%')\" && chmod +x run.sh && ./run.sh"
+wsl bash -lc "cd \"$(wslpath -a '%CD%')\" && chmod +x run.sh && ./run.sh -y"
 
 if errorlevel 1 (
     echo.

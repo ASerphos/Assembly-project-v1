@@ -1,9 +1,14 @@
 #!/usr/bin/env bash
 # ============================================================================
 # run.sh — Build and launch the Hollow Knight Assembly Demo on Linux/Ubuntu
-# Usage: ./run.sh
+# Usage: ./run.sh [-y]   (-y = auto-install missing deps without prompting)
 # ============================================================================
 set -e
+
+AUTO_YES=0
+if [[ "${1:-}" == "-y" || "${1:-}" == "--yes" ]]; then
+    AUTO_YES=1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
@@ -27,18 +32,20 @@ fi
 if [ ${#MISSING[@]} -gt 0 ]; then
     echo "Missing dependencies: ${MISSING[*]}"
     echo
-    echo "Install them with:"
-    echo "    sudo apt-get update"
-    echo "    sudo apt-get install -y nasm gcc make libx11-dev"
-    echo
-    read -rp "Install now? [y/N] " answer
-    if [[ "$answer" =~ ^[Yy]$ ]]; then
-        sudo apt-get update
-        sudo apt-get install -y nasm gcc make libx11-dev
+    if [ $AUTO_YES -eq 1 ]; then
+        echo "Installing automatically..."
     else
-        echo "Aborting."
-        exit 1
+        echo "Install them with:"
+        echo "    sudo apt-get install -y nasm gcc make libx11-dev"
+        echo
+        read -rp "Install now? [y/N] " answer
+        if ! [[ "$answer" =~ ^[Yy]$ ]]; then
+            echo "Aborting."
+            exit 1
+        fi
     fi
+    sudo apt-get update -qq
+    sudo apt-get install -y nasm gcc make libx11-dev
 fi
 
 # ---- Check DISPLAY (need an X server) ----

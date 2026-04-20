@@ -1,54 +1,88 @@
 @echo off
 REM ============================================================================
 REM run.bat — Build and launch the Hollow Knight Assembly Demo on Windows
-REM Runs inside WSL (Windows Subsystem for Linux). WSL 2 + Ubuntu required.
-REM GUI window appears automatically via WSLg (Windows 10 22H2 / Windows 11).
+REM Requires: NASM and MinGW-w64 GCC (install via MSYS2)
 REM Usage: double-click run.bat, or run from cmd.exe / PowerShell
 REM ============================================================================
 
 setlocal
 cd /d "%~dp0"
 
-echo === Hollow Knight -- Assembly Demo (Windows / WSL) ===
+echo === Hollow Knight -- Assembly Demo ===
 echo.
 
-REM ---- Check that WSL is installed ----
-where wsl >nul 2>&1
+REM ---- Check for NASM ----
+where nasm >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: WSL is not installed.
+    echo ERROR: NASM assembler not found.
     echo.
-    echo This demo runs on Linux/X11. On Windows, launch it via WSL.
-    echo Install WSL with:
-    echo     wsl --install
-    echo Then reboot, launch Ubuntu once to finish setup, and re-run this script.
+    echo Install MSYS2 from https://www.msys2.org/
+    echo Then open "MSYS2 MinGW64" terminal and run:
+    echo     pacman -S mingw-w64-x86_64-nasm mingw-w64-x86_64-gcc make
+    echo.
+    echo After installing, make sure MSYS2's bin folder is in your PATH:
+    echo     C:\msys64\mingw64\bin
     echo.
     pause
     exit /b 1
 )
 
-REM ---- Check that a WSL distro is installed ----
-wsl -l -q >nul 2>&1
+REM ---- Check for GCC (MinGW-w64) ----
+where gcc >nul 2>&1
 if errorlevel 1 (
-    echo ERROR: No WSL distribution is installed.
-    echo Install Ubuntu with:  wsl --install -d Ubuntu
+    echo ERROR: GCC (MinGW-w64) not found.
+    echo.
+    echo Install MSYS2 from https://www.msys2.org/
+    echo Then open "MSYS2 MinGW64" terminal and run:
+    echo     pacman -S mingw-w64-x86_64-nasm mingw-w64-x86_64-gcc make
+    echo.
+    echo After installing, make sure MSYS2's bin folder is in your PATH:
+    echo     C:\msys64\mingw64\bin
     echo.
     pause
     exit /b 1
 )
 
-REM ---- Run build + launch inside WSL ----
-REM Convert the Windows working-directory path to a WSL path via wslpath,
-REM then invoke run.sh inside WSL.
-echo Launching in WSL...
+REM ---- Build ----
+echo Building...
+if not exist obj mkdir obj
+
+nasm -f win64 -I include/ -o obj/main_win.o src/main_win.asm
+if errorlevel 1 goto :build_error
+
+nasm -f win64 -I include/ -o obj/player.o src/player.asm
+if errorlevel 1 goto :build_error
+
+nasm -f win64 -I include/ -o obj/render.o src/render.asm
+if errorlevel 1 goto :build_error
+
+nasm -f win64 -I include/ -o obj/enemy.o src/enemy.asm
+if errorlevel 1 goto :build_error
+
+nasm -f win64 -I include/ -o obj/collision.o src/collision.asm
+if errorlevel 1 goto :build_error
+
+nasm -f win64 -I include/ -o obj/level.o src/level.asm
+if errorlevel 1 goto :build_error
+
+nasm -f win64 -I include/ -o obj/sprites.o src/sprites.asm
+if errorlevel 1 goto :build_error
+
+echo Linking...
+gcc -o hollow_knight.exe obj/main_win.o obj/player.o obj/render.o obj/enemy.o obj/collision.o obj/level.o obj/sprites.o -lgdi32 -luser32 -lkernel32 -mwindows
+if errorlevel 1 goto :build_error
+
 echo.
+echo Build successful!
+echo.
+echo Controls: WASD = move, Space = jump, Left Click = attack, Right Click = dash, Esc = quit
+echo.
+echo Launching hollow_knight.exe...
+start "" hollow_knight.exe
+goto :eof
 
-wsl bash -lc "cd \"$(wslpath -a '%CD%')\" && chmod +x run.sh && ./run.sh -y"
-
-if errorlevel 1 (
-    echo.
-    echo Game exited with an error.
-    pause
-    exit /b 1
-)
-
-endlocal
+:build_error
+echo.
+echo Build failed! Check the error messages above.
+pause
+exit /b 1

@@ -60,17 +60,24 @@ make
 
 ### Windows
 
-The game targets Linux/X11, so on Windows it runs through **WSL** (Windows
-Subsystem for Linux). WSL 2 with Ubuntu provides a built-in GUI via WSLg on
-Windows 10 22H2 and Windows 11 — the game window appears as a normal Windows
-window.
+The game runs **natively** on Windows using the Win32 API (no WSL needed).
+You need **NASM** and **MinGW-w64 GCC** — the easiest way is via
+[MSYS2](https://www.msys2.org/):
 
-1. Install WSL (one-time, needs admin PowerShell): `wsl --install`
-2. Reboot, launch Ubuntu once to finish first-time setup
-3. Double-click `run.bat` (or run it from `cmd` / PowerShell)
+1. Download and install MSYS2 from https://www.msys2.org/
+2. Open the **MSYS2 MinGW64** terminal and run:
+   ```
+   pacman -S mingw-w64-x86_64-nasm mingw-w64-x86_64-gcc make
+   ```
+3. Add MSYS2 to your PATH: `C:\msys64\mingw64\bin`
+4. Double-click `run.bat` (or run it from `cmd` / PowerShell)
 
-`run.bat` forwards to `run.sh` inside WSL, which installs dependencies, builds,
-and launches the game. The window appears on your Windows desktop via WSLg.
+Or build manually from the MSYS2 MinGW64 terminal:
+
+```
+make
+./hollow_knight.exe
+```
 
 ### Headless / CI testing
 
@@ -90,7 +97,8 @@ Assembly-project-v1/
 ├── include/
 │   └── constants.inc       # Shared constants, macros, struct offsets
 └── src/
-    ├── main.asm            # Entry, X11 init, game loop, input events
+    ├── main.asm            # Entry point — Linux/X11 version
+    ├── main_win.asm        # Entry point — Windows/Win32 version
     ├── player.asm          # Player physics, state machine, attack/dash
     ├── render.asm          # Framebuffer ops, sprite blitter, HUD
     ├── enemy.asm           # Enemy AI (patrol), combat interactions
@@ -119,15 +127,22 @@ GCC against `libX11` and `libc`.
 - Collision detection separates X and Y axis sweeps against tile grid
 - One-way platforms only collide from above
 
-### X11 Interaction
+### Platform Abstraction
 
-All X11 calls are made from assembly using the System V AMD64 ABI. Uses:
+The game has two platform backends sharing the same game logic, renderer,
+physics, and sprite code:
+
+**Linux (main.asm)** — X11/Xlib using System V AMD64 ABI:
 - `XOpenDisplay`, `XCreateSimpleWindow`, `XMapWindow`, `XSelectInput`
 - `XCreateImage`, `XPutImage` for software rendering
 - `XPending` / `XNextEvent` (non-blocking) for input
-- `XLookupKeysym` for key translation
-- `XInternAtom` + `XSetWMProtocols` for clean window-close handling
 - `clock_gettime` + `nanosleep` for frame timing
+
+**Windows (main_win.asm)** — Win32 API using Microsoft x64 ABI:
+- `RegisterClassExA`, `CreateWindowExA` for window creation
+- `SetDIBitsToDevice` for software rendering (BGRA framebuffer to window)
+- `PeekMessageA` / `WndProc` for keyboard + mouse input
+- `QueryPerformanceCounter` + `Sleep` for frame timing
 
 ## Assembly Concepts Demonstrated
 

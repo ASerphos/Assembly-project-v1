@@ -58,25 +58,23 @@ make
 ./hollow_knight
 ```
 
-### Windows
+### Windows (no installs needed)
 
-The game runs **natively** on Windows using the Win32 API (no WSL needed).
-You need **NASM** and **MinGW-w64 GCC** — the easiest way is via
-[MSYS2](https://www.msys2.org/):
+A pre-built `hollow_knight.exe` is included in the repository — just download
+and play:
 
-1. Download and install MSYS2 from https://www.msys2.org/
-2. Open the **MSYS2 MinGW64** terminal and run:
-   ```
-   pacman -S mingw-w64-x86_64-nasm mingw-w64-x86_64-gcc make
-   ```
-3. Add MSYS2 to your PATH: `C:\msys64\mingw64\bin`
-4. Double-click `run.bat` (or run it from `cmd` / PowerShell)
+1. Download / clone this repository
+2. Double-click **`run.bat`** (or run `hollow_knight.exe` directly)
 
-Or build manually from the MSYS2 MinGW64 terminal:
+That's it — no compilers, no MSYS2, no WSL. The exe is a native Win64 binary
+built with the Win32 API (GDI + `SetDIBitsToDevice` for rendering).
 
+**Building from source** (optional — only if you want to modify the code):
+
+Install [MSYS2](https://www.msys2.org/), then in the MSYS2 MinGW64 terminal:
 ```
+pacman -S mingw-w64-x86_64-nasm mingw-w64-x86_64-gcc make
 make
-./hollow_knight.exe
 ```
 
 ### Headless / CI testing

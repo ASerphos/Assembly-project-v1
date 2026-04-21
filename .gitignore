@@ -1,0 +1,22 @@
+# Build output
+obj/
+*.o
+*.d
+
+# Linux binary (built from source)
+/hollow_knight
+
+# Keep the pre-built Windows exe
+!/hollow_knight.exe
+
+# Editor / IDE
+*.swp
+*~
+.vscode/
+.idea/
+*.DS_Store
+
+# Debug / profiling
+core
+*.dSYM/
+perf.data*

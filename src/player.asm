@@ -21,6 +21,7 @@ extern game_state
 ; Externals from collision.asm
 extern check_tile_collision_x
 extern check_tile_collision_y
+extern get_tile
 
 global update_player
 global respawn_player
@@ -235,9 +236,6 @@ update_player:
     mov ecx, KNIGHT_HITBOX_H
     mov r8d, [rel player_vy]        ; vy sign
 
-    ; Track on_ground
-    xor r11d, r11d                  ; r11d = landed flag
-
     ; Push y_old onto stack for collision func
     push r14
     call check_tile_collision_y
@@ -248,16 +246,35 @@ update_player:
     shl eax, FIXED_SHIFT
     mov [rel player_y], eax
 
-    ; r11d: 1 if landed
-    test r11d, r11d
-    jz .not_landed
+    ; ---- Ground probe: check tile directly below feet ----
+    mov eax, [rel player_y]
+    sar eax, FIXED_SHIFT
+    add eax, KNIGHT_HB_OY + KNIGHT_HITBOX_H
+    cdq
+    mov ecx, TILE_SIZE
+    idiv ecx
+    mov r12d, eax
+
+    mov eax, [rel player_x]
+    sar eax, FIXED_SHIFT
+    add eax, KNIGHT_HB_OX + (KNIGHT_HITBOX_W / 2)
+    cdq
+    idiv ecx
+    mov edi, eax
+    mov esi, r12d
+    call get_tile
+
+    cmp al, TILE_SOLID
+    je .ground_solid
+    cmp al, TILE_PLATFORM
+    jne .airborne
+    cmp dword [rel player_vy], 0
+    jl .airborne
+.ground_solid:
     mov dword [rel player_on_ground], 1
     mov dword [rel player_vy], 0
     jmp .update_anim
-.not_landed:
-    ; We are airborne unless vy got zeroed by top collision
-    ; Check: did check_tile_collision_y snap us (y differs from expected)?
-    ; Simple heuristic: we're on_ground only if r11d said so.
+.airborne:
     mov dword [rel player_on_ground], 0
 
 .update_anim:
